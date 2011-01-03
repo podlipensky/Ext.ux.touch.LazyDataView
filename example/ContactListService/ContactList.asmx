@@ -1,0 +1,1 @@
+﻿<%@ WebService Language="C#" CodeBehind="ContactList.asmx.cs" Class="ContactListService.ContactList" %>
