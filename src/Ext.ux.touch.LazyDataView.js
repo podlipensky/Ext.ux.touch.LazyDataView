@@ -111,6 +111,46 @@ Ext.ux.touch.LazyDataView = Ext.extend(Ext.DataView, {
 				this.scroller.on('scroll', this.onScroll, this);
 			},
 			
+			/**
+		     * Refreshes the view by reloading the data from the store and re-rendering the template.
+		     */
+		    refresh: function() {
+		        if (!this.rendered) {
+		            return;
+		        }
+		        var startIdx  = this.prevRowsCount || 0;
+		        var el = this.getTargetEl(),
+		            records = this.store.getRange(startIdx);
+		     
+		        if (records.length < 1) {
+		            if (!this.deferEmptyText || this.hasSkippedEmptyText) {
+		                el.update(this.emptyText);
+		            }
+		            this.all.clear();
+		        } else {
+		            if(this.prevRowsCount){
+		            	//append only records from newly loaded page
+		            	var appendRecords = this.collectData(records, startIdx);
+		            	this.tpl.append(el, appendRecords);
+		            	this.prevRowsCount = 0;
+		            	this.all.clear();
+		            }
+		            else{//this is first refresh or not scroll-related refresh
+			            el.update('');
+			            this.tpl.overwrite(el, this.collectData(records, 0));
+		            }
+		            //refresh internal collections
+		            var elements = Ext.query(this.itemSelector, el.dom);
+		            this.all.fill(elements);
+		            this.updateIndexes(0);
+		        }
+		        this.hasSkippedEmptyText = true;
+		        this.fireEvent('refresh');
+		    },
+		    
+		    // private
+		    onBeforeLoad: Ext.emptyFn,
+			
 			/*
 			 * Triggered during control's items scroll. Determine when to load next page and
 			 * the number of the page to load.
@@ -127,6 +167,8 @@ Ext.ux.touch.LazyDataView = Ext.extend(Ext.DataView, {
 				var isLastPage = (itemsCount / pageSize) >= (store.currentPage - 2);
 				if (c / pageSize >= this.loadBarrier && !store.isLoading()
 						&& isLastPage) {
+					//cache current amount of records in order to be able to sort out coming records
+					this.prevRowsCount = this.store.getCount();
 					store.nextPage();
 				}
 			},
