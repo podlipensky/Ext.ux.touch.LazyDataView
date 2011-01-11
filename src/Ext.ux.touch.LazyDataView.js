@@ -179,6 +179,51 @@ Ext.ux.touch.LazyDataView = Ext.extend(Ext.DataView, {
 			doComponentLayout : function(width, height, isSetSize) {
 				this.calcPageSize(width, height);
 				Ext.ux.touch.LazyDataView.superclass.doComponentLayout.apply(this, arguments);
-			}
+			},
+			
+		    getSelectionModel: function(){
+		        if (!this.selModel) {
+		            this.selModel = {};
+		        }
+		
+		        var mode;
+		        switch(true) {
+		            case this.simpleSelect:
+		                mode = 'SIMPLE';
+		            break;
+		            
+		            case this.multiSelect:
+		                mode = 'MULTI';
+		            break;
+		            
+		            case this.singleSelect:
+		            default:
+		                mode = 'SINGLE';
+		            break;
+		        }
+		        
+		        Ext.applyIf(this.selModel, {
+		            allowDeselect: this.allowDeselect,
+		            mode: mode
+		        });        
+		        
+		        if (!this.selModel.events) {
+		            this.selModel = new Ext.ux.touch.LazyDataViewSelectionModel(this.selModel);
+		        }
+		        
+		        if (!this.selModel.hasRelaySetup) {
+		            this.relayEvents(this.selModel, ['selectionchange', 'select', 'deselect']);
+		            this.selModel.hasRelaySetup = true;
+		        }
+		
+		        // lock the selection model if user
+		        // has disabled selection
+		        if (this.disableSelection) {
+		            this.selModel.locked = true;
+		        }
+		        
+		        return this.selModel;
+		    }
+		    
 		});
 Ext.reg('lazydataview', Ext.ux.touch.LazyDataView);
